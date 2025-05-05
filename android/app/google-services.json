@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "157554943184",
+    "project_id": "nearwala-new",
+    "storage_bucket": "nearwala-new.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:157554943184:android:309238032065052b136ad5",
+        "android_client_info": {
+          "package_name": "com.example.nearbycreds"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKgit0CJxo7-kpP_LlADxUY6R6LnnmscU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
