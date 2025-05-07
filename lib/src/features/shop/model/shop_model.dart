@@ -1,44 +1,46 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+
 class Shop {
-  final String id; // Add id property
+  final String id;
   final String name;
   final bool active;
+  final bool redeem; 
   final String ownerId;
   final DateTime createdAt;
   final Product product;
 
-  // Constructor
   Shop({
-    required this.id, // Add id parameter to constructor
+    required this.id,
     required this.name,
     required this.active,
+    required this.redeem, 
     required this.ownerId,
     required this.createdAt,
     required this.product,
   });
 
-  // Factory constructor to create a Shop instance from Firestore document data
   factory Shop.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
 
     return Shop(
-      id: doc.id, // Set id from the document's ID
+      id: doc.id,
       name: data['name'] ?? '',
       active: data['active'] ?? true,
+      redeem: data['redeem'] ?? false, // <-- Added field parsing
       ownerId: data['ownerId'] ?? '',
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
-          : DateTime.now(), // or handle it differently
+          : DateTime.now(),
       product: Product.fromMap(data['product'] ?? {}),
     );
   }
 
-  // Method to convert Shop instance to a map
   Map<String, dynamic> toMap() {
     return {
       'name': name,
       'active': active,
+      'redeem': redeem, // <-- Added to map
       'ownerId': ownerId,
       'createdAt': Timestamp.fromDate(createdAt),
       'product': product.toMap(),

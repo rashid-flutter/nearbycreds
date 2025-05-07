@@ -1,16 +1,59 @@
+import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:nearbycreds/src/core/util/widgets/app_button.dart';
-import 'package:nearbycreds/src/features/business_dashboard/functins.dart';
 import 'package:nearbycreds/src/features/pyments/services/pyment_service.dart';
 import 'package:nearbycreds/src/features/shop/model/shop_model.dart';
 
-class ShopDetailPage extends StatelessWidget {
+class ShopDetailPage extends StatefulWidget {
   final Shop shop;
 
   const ShopDetailPage({super.key, required this.shop});
 
   @override
+  State<ShopDetailPage> createState() => _ShopDetailPageState();
+}
+
+class _ShopDetailPageState extends State<ShopDetailPage> {
+  late final PaymentService paymentService;
+
+@override
+void initState() {
+  super.initState();
+
+  paymentService = PaymentService(); // ✅ Singleton instance
+
+  // ✅ Set callback using the singleton instance
+  paymentService.onPaymentSuccess = (int coinsEarned) {
+    log("Coins earned: $coinsEarned");
+
+    if (mounted) {
+      context.push('/payment-success', extra: coinsEarned); // ✅ Navigation
+    }
+  };
+}
+
+@override
+void dispose() {
+  paymentService.onPaymentSuccess = null; // ✅ Clean up
+  super.dispose();
+}
+
+  
+
+  void _handlePayment() {
+    PaymentService().openCheckout(
+      amount: widget.shop.product.price.toInt(),
+      name: widget.shop.product.name,
+      description: widget.shop.product.description ?? 'Product Description',
+      shopId: widget.shop.id,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final shop = widget.shop;
+
     return Scaffold(
       appBar: AppBar(title: Text(shop.name)),
       body: Padding(
@@ -19,7 +62,6 @@ class ShopDetailPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.network(
@@ -31,22 +73,18 @@ class ShopDetailPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              // Name
               Text(
                 shop.name,
                 style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              // Price
               Text(
                 '₹ ${shop.product.price.toStringAsFixed(2)}',
                 style: const TextStyle(fontSize: 20, color: Colors.green),
               ),
               const SizedBox(height: 8),
-              // Description
               Text(shop.product.description ?? 'No description available'),
               const SizedBox(height: 8),
-              // Status
               Text(
                 shop.active ? 'Active' : 'Inactive',
                 style: TextStyle(
@@ -56,16 +94,6 @@ class ShopDetailPage extends StatelessWidget {
                       : const Color.fromARGB(255, 179, 12, 0),
                 ),
               ),
-              const SizedBox(height: 10),
-              // Product name
-              Text(
-                shop.product.name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              Text(shop.product.description ?? ''),
-              const SizedBox(height: 10),
-              Text('Posted on: ${formatDateWithRelative(shop.createdAt)}'),
             ],
           ),
         ),
@@ -76,16 +104,7 @@ class ShopDetailPage extends StatelessWidget {
           label: 'Shop Now',
           color: const Color.fromARGB(255, 11, 116, 14),
           icon: Icons.shopping_cart,
-          onPressed: () {
-            // Trigger payment process using PaymentService
-            PaymentService().openCheckout(
-              amount: (shop.product.price * 5).toInt(), // Convert price to paise
-              name: shop.product.name,
-              description: shop.product.description ?? 'Product Description',
-             
-              shopId: shop.id, // Pass the shopId to the payment service
-            );
-          },
+          onPressed: _handlePayment,
         ),
       ),
     );
