@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nearbycreds/src/features/cart/cart_page.dart';
 import 'package:nearbycreds/src/features/home/screens/home_screen.dart';
+import 'package:nearbycreds/src/features/home/screens/redeem_history.dart';
 import 'package:nearbycreds/src/features/profile/pages/Profile_screen.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
@@ -18,6 +19,7 @@ class _MainScreenState extends ConsumerState<MainScreen> with TickerProviderStat
   final List<Widget> _screens = const [
     HomeScreen(),
     CartPage(),
+    RedeemHistoryPage(), 
     ProfileScreen(),
     // Add this line for Redeem History screen
   ];
@@ -69,7 +71,8 @@ class _MainScreenState extends ConsumerState<MainScreen> with TickerProviderStat
           children: [
             _buildBarItem(icon: Icons.home, label: 'Home', index: 0),
             _buildBarItem(icon: Icons.shopping_cart, label: 'Cart', index: 1),
-            _buildBarItem(icon: Icons.person, label: 'Profile', index: 2), // Adjusted index for Profile
+             _buildBarItem(icon: Icons.history, label: 'History', index: 2),
+            _buildBarItem(icon: Icons.person, label: 'Profile', index: 3), // Adjusted index for Profile
           ],
         ),
       ),

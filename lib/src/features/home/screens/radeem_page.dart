@@ -76,10 +76,36 @@ class _RedeemPageState extends State<RedeemPage> {
     if (confirm != true) return;
 
     try {
+      // Deduct coins from the user's profile
       await _profileService.deductCoins(price);
+
+      // 🔥 Create a new document in the 'redeem' collection
+      await FirebaseFirestore.instance.collection('redeem').add({
+        'userId': FirebaseAuth.instance.currentUser!.uid,
+        'shopId': shop.id,
+        'shopName': shop.name,
+        'product': {
+          'name': shop.product.name,
+          'price': shop.product.price,
+        },
+        'redeemedAt': FieldValue.serverTimestamp(),
+        'price': price,
+      });
 
       setState(() {
         userCoins -= price;
+        final shopIndex = shops.indexWhere((s) => s.id == shop.id);
+        if (shopIndex != -1) {
+          shops[shopIndex] = Shop(
+            id: shop.id,
+            name: shop.name,
+            active: shop.active,
+            redeem: true, // update the redeem status
+            ownerId: shop.ownerId,
+            createdAt: shop.createdAt,
+            product: shop.product,
+          );
+        }
       });
 
       ScaffoldMessenger.of(context).showSnackBar(

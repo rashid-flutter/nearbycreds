@@ -10,6 +10,7 @@ import 'package:nearbycreds/src/features/home/home_main_screen.dart';
 import 'package:nearbycreds/src/features/home/screens/radeem_page.dart';
 import 'package:nearbycreds/src/features/profile/pages/edit_profile_screen.dart';
 import 'package:nearbycreds/src/features/profile/model/profile_model.dart';
+import 'package:nearbycreds/src/features/pyments/widget/sucess_card.dart';
 import 'package:nearbycreds/src/features/shop/model/shop_model.dart';
 import 'package:nearbycreds/src/features/shop/screens/shop_detail_page.dart';
 import 'package:nearbycreds/src/features/shop/service/shop_service.dart';
@@ -120,6 +121,28 @@ GoRoute(
   path: '/redeem',
   builder: (context, state) => const RedeemPage(),
 ),
+// GoRoute(
+//   path: '/payment',
+//   builder: (context, state) {
+//     final data = state.extra as Map<String, dynamic>;
+
+//     return PaymentPage(
+//       shopId: data['shopId'],
+//       amount: data['amount'],
+//       name: data['name'],
+//       description: data['description'],
+//     );
+//   },
+// ),
+GoRoute(
+  path: '/payment-success',
+  builder: (context, state) {
+    final earnedCoins = state.extra as int;
+    return PaymentSuccessPage(earnedCoins: earnedCoins);
+  },
+),
+
+
     ],
   );
 }

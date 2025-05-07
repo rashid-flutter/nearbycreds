@@ -1,61 +1,78 @@
+import 'package:nearbycreds/src/features/shop/model/shop_model.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:nearbycreds/src/features/shop/service/shop_service.dart';  // ShopService import
-import 'package:nearbycreds/src/features/profile/service/profile_service.dart'; // Import ProfileService
+import 'package:nearbycreds/src/features/shop/service/shop_service.dart';
+import 'package:nearbycreds/src/features/profile/service/profile_service.dart';
 
 class PaymentService {
-  late Razorpay _razorpay;
+  static final PaymentService _instance = PaymentService._internal();
+
+  factory PaymentService() => _instance;
+
+  late final Razorpay _razorpay;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final ShopService _shopService = ShopService();
-  final ProfileService _profileService = ProfileService(); // Profile service to get email/contact
+  final ProfileService _profileService = ProfileService();
 
-  PaymentService() {
+  int _paymentAmount = 0;
+  String? _currentPaymentId;
+  Function(int coinsEarned)? onPaymentSuccess;
+
+  PaymentService._internal() {
     _razorpay = Razorpay();
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handleSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handleFailure);
     _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
   }
 
+  void dispose() {
+    _razorpay.clear();
+    onPaymentSuccess = null;
+  }
+  late final String _currentShopId;  // Declare this in PaymentService
+
   void openCheckout({
     required int amount,
     required String name,
     required String description,
-    required String shopId, // Pass shopId directly
+    required String shopId,
   }) async {
+    
     try {
-      // Fetch the shop associated with the given shopId
-      final shop = await _shopService.getShopById(shopId); // Fetch shop by shopId
+      _currentShopId = shopId; 
+      _paymentAmount = amount;
+
+      final shop = await _shopService.getShopById(shopId);
       if (shop == null) {
-        debugPrint('No shop found with the given shopId!');
+        debugPrint('❌ No shop found with the given shopId!');
         return;
       }
 
-      // Fetch user profile to get the contact and email
       final profile = await _profileService.getProfile();
       if (profile == null) {
-        debugPrint('No profile found for the current user!');
+        debugPrint('❌ No profile found for the current user!');
         return;
       }
 
       var options = {
-        'key': 'rzp_test_h3G4D7fHQm3FGZ', // Test key
-        'amount': amount * 100, // Amount in paise
+        'key': 'rzp_test_h3G4D7fHQm3FGZ', // replace with your live key in production
+        'amount': amount * 100, // in paise
         'name': name,
         'description': description,
         'prefill': {
-          'contact': profile.phone, // Fetch contact from Profile
-          'email': profile.email, // Fetch email from Profile
+          'contact': profile.phone,
+          'email': profile.email,
         },
         'external': {
-          'wallets': [], // Leave it empty to allow all available wallets
+          'wallets': [],
         },
         'method': {
-          'netbanking': true, // Allow Netbanking
-          'cards': true, // Allow credit/debit cards
-          'upi': true, // Allow UPI
-          'wallets': true, // Allow wallets like Paytm, Google Pay, etc.
+          'netbanking': true,
+          'cards': true,
+          'upi': true,
+          'wallets': true,
         },
         'theme': {
           'color': '#3399cc'
@@ -63,74 +80,95 @@ class PaymentService {
       };
 
       _razorpay.open(options);
-
-      // Store payment details in Firestore after the payment process
-      await _storePaymentDetails(shopId, profile.userId); // Use userId here
-      await _earnCoins(profile.userId, amount);  // Add coins to user's profile (userId instead of uid)
     } catch (e) {
-      debugPrint('Error during checkout: $e');
+      debugPrint('❌ Error during checkout: $e');
     }
   }
 
   void _handleSuccess(PaymentSuccessResponse response) async {
-    debugPrint('Payment Successful: ${response.paymentId}');
-    // Get payment details and save to Firestore
-    await _storePaymentDetails(response.paymentId.toString(), 'dummy_user_id'); // Use actual userId here
+  debugPrint('✅ Payment Successful: ${response.paymentId}');
+  final userId = FirebaseAuth.instance.currentUser?.uid;
+  if (userId == null) return;
+
+  _currentPaymentId = response.paymentId;
+  final coinsEarned = _paymentAmount ~/ 90;
+
+  // Retrieve the correct shopId (stored earlier)
+  final shop = await _shopService.getShopById(_currentShopId);
+  if (shop == null) {
+    debugPrint('❌ Shop not found for the payment!');
+    return;
   }
 
-  void _handleFailure(PaymentFailureResponse response) {
-    debugPrint('Payment Failed: ${response.message}');
+  // Store payment details with the shop info
+  await _storePaymentDetails(response.paymentId!, userId, 'success', coinsEarned, shop);
+
+  // Update the user's coin balance
+  await _earnCoins(userId, _paymentAmount);
+
+  if (onPaymentSuccess != null) {
+    onPaymentSuccess!(coinsEarned);
+  }
+}
+
+  void _handleFailure(PaymentFailureResponse response) async {
+    debugPrint('❌ Payment Failed: ${response.message}');
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null || _currentPaymentId == null) return;
+
+    await _storePaymentDetails(_currentPaymentId!, userId, 'failed');
   }
 
   void _handleExternalWallet(ExternalWalletResponse response) {
-    debugPrint('External Wallet selected: ${response.walletName}');
+    debugPrint('📱 External Wallet selected: ${response.walletName}');
   }
 
-  Future<void> _storePaymentDetails(String shopId, String userId) async {
+  Future<void> _storePaymentDetails(
+    String paymentId,
+    String userId,
+    String status, [
+    int? coinsEarned,
+    Shop? shop,
+  ]) async {
     try {
-      // Assuming payment is linked to a shop and you have the shopId directly
-      var paymentData = {
-        'paymentId': 'dummy_payment_id', // Use actual paymentId after successful payment
-        'status': 'success',
+      final data = {
+        'paymentId': paymentId,
+        'status': status,
         'timestamp': FieldValue.serverTimestamp(),
-        'shopId': shopId,
         'userId': userId,
+        if (coinsEarned != null) 'coinsEarned': coinsEarned,
+        if (shop != null) 'shopId': shop.id,
+        if (shop != null) 'shopName': shop.name,
+        if (shop != null) 'shopOwnerId': shop.ownerId,
       };
 
-      // Store payment details in Firestore
-      await _firestore.collection('payments').add(paymentData);
-      debugPrint('Payment details stored successfully!');
+      await _firestore.collection('payments').add(data);
+      debugPrint('📝 Payment details stored successfully!');
     } catch (e) {
-      debugPrint('Error storing payment details: $e');
+      debugPrint('❌ Error storing payment details: $e');
     }
   }
 
   Future<void> _earnCoins(String userId, int amount) async {
-  try {
-    // Calculate the number of coins based on the payment amount.
-    final coinsEarned = amount ~/ 90;  // Example: Earn 1 coin per 10 units of currency
+    try {
+      final coinsEarned = amount ~/ 90;
 
-    // Fetch the current profile to get the current coin balance
-    final profileDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
-    
-    if (profileDoc.exists) {
-      final profileData = profileDoc.data()!;
-      final currentCoins = profileData['coins'] ?? 0;  // Get current coins from Firestore
+      final profileDoc = await _firestore.collection('users').doc(userId).get();
+      if (!profileDoc.exists) {
+        debugPrint('❌ User profile not found.');
+        return;
+      }
 
-      // Calculate the new coin balance
-      final newCoinBalance = currentCoins + coinsEarned;
+      final currentCoins = profileDoc.data()?['coins'] ?? 0;
+      final newBalance = currentCoins + coinsEarned;
 
-      // Update the coin balance in Firestore
-      await FirebaseFirestore.instance.collection('users').doc(userId).update({
-        'coins': newCoinBalance,  // Update coins field in Firestore
+      await _firestore.collection('users').doc(userId).update({
+        'coins': newBalance,
       });
 
-      debugPrint('Coins earned: $coinsEarned. New balance: $newCoinBalance');
-    } else {
-      debugPrint('User profile not found.');
+      debugPrint('💰 Coins earned: $coinsEarned | New balance: $newBalance');
+    } catch (e) {
+      debugPrint('❌ Error updating coins: $e');
     }
-  } catch (e) {
-    debugPrint('Error updating coins: $e');
   }
-}
 }
