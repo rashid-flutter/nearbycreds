@@ -5,7 +5,7 @@ class Profile {
   final String email;
   final String? profileImageUrl;
   final String? role;
-  final int? coins;  // Add coins field
+  final int? coins; // Add coins field
 
   // Constructor
   Profile({
@@ -15,7 +15,7 @@ class Profile {
     required this.phone,
     required this.email,
     this.profileImageUrl,
-     this.coins,  // Initialize coins field
+    this.coins, // Initialize coins field
   });
 
   // Factory method to create a Profile from Firestore data
@@ -27,7 +27,7 @@ class Profile {
       email: data['email'] ?? 'No Email',
       role: data['role'] ?? 'No role',
       profileImageUrl: data['profileImageUrl'],
-      coins: data['coins'] ?? 0,  // Default coins to 0 if not present
+      coins: data['coins'] ?? 0, // Default coins to 0 if not present
     );
   }
 
@@ -40,7 +40,7 @@ class Profile {
       'email': email,
       'role': role,
       'profileImageUrl': profileImageUrl,
-      'coins': coins,  // Include coins in the map
+      'coins': coins, // Include coins in the map
     };
   }
 }

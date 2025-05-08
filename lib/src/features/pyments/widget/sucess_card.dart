@@ -9,7 +9,8 @@ class PaymentSuccessPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("Displaying payment success page with earned coins: $earnedCoins");
+    debugPrint(
+        "Displaying payment success page with earned coins: $earnedCoins");
 
     return Scaffold(
       appBar: AppBar(
@@ -25,17 +26,16 @@ class PaymentSuccessPage extends StatelessWidget {
             const SizedBox(height: 16),
             // Add other widgets or information if necessary
             const SizedBox(height: 30),
-       
-
           ],
         ),
       ),
-      bottomNavigationBar:    Padding(
+      bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(15.0),
         child: AppButton(
           label: 'Done',
           icon: Icons.check_circle,
-          color: const Color.fromARGB(255, 11, 116, 14), // match your app's green theme
+          color: const Color.fromARGB(
+              255, 11, 116, 14), // match your app's green theme
           onPressed: () {
             context.go('/home');
           },
@@ -44,7 +44,6 @@ class PaymentSuccessPage extends StatelessWidget {
     );
   }
 }
-
 
 class PaymentSuccessCard extends StatefulWidget {
   final int earnedCoins;
@@ -67,11 +66,13 @@ class _PaymentSuccessCardState extends State<PaymentSuccessCard>
     // Set up the animation controller
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 3), // Adjust duration for rotation speed
+      duration:
+          const Duration(seconds: 3), // Adjust duration for rotation speed
     );
 
     // Create a rotation animation (spin around the Y-axis)
-    _rotationAnimation = Tween<double>(begin: 0.0, end: 2 * 3.14159) // 360 degrees in radians
+    _rotationAnimation = Tween<double>(
+            begin: 0.0, end: 2 * 3.14159) // 360 degrees in radians
         .animate(CurvedAnimation(parent: _controller, curve: Curves.linear));
 
     // Start the animation
@@ -86,7 +87,8 @@ class _PaymentSuccessCardState extends State<PaymentSuccessCard>
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("Displaying payment success card with earned coins: ${widget.earnedCoins}");
+    debugPrint(
+        "Displaying payment success card with earned coins: ${widget.earnedCoins}");
 
     return Card(
       color: Colors.green.shade100,

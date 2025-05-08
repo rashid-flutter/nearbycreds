@@ -16,73 +16,82 @@ class AuthService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   AuthService(this.ref);
-  Future<void> registerWithEmail(String email, String password, BuildContext context) async {
-  try {
-    await _auth.createUserWithEmailAndPassword(email: email, password: password);
-    _handlePostLogin(context); // optionally go to select-role
-  } on FirebaseAuthException catch (e) {
-    String message = 'Registration failed.';
-    if (e.code == 'email-already-in-use') {
-      message = 'An account already exists for that email.';
-    } else if (e.code == 'weak-password') {
-      message = 'The password is too weak.';
+  Future<void> registerWithEmail(
+      String email, String password, BuildContext context) async {
+    try {
+      await _auth.createUserWithEmailAndPassword(
+          email: email, password: password);
+      _handlePostLogin(context); // optionally go to select-role
+    } on FirebaseAuthException catch (e) {
+      String message = 'Registration failed.';
+      if (e.code == 'email-already-in-use') {
+        message = 'An account already exists for that email.';
+      } else if (e.code == 'weak-password') {
+        message = 'The password is too weak.';
+      }
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error: $e')));
     }
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
   }
-}
 
-Future<void> loginWithEmail(String email, String password, BuildContext context) async {
-  try {
-    await _auth.signInWithEmailAndPassword(email: email, password: password);
-    _handlePostLogin(context);
-  } on FirebaseAuthException catch (e) {
-    String message = 'Login failed. Please try again.';
-    if (e.code == 'user-not-found') {
-      message = 'No user found for that email.';
-    } else if (e.code == 'wrong-password') {
-      message = 'Incorrect password.';
+  Future<void> loginWithEmail(
+      String email, String password, BuildContext context) async {
+    try {
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      _handlePostLogin(context);
+    } on FirebaseAuthException catch (e) {
+      String message = 'Login failed. Please try again.';
+      if (e.code == 'user-not-found') {
+        message = 'No user found for that email.';
+      } else if (e.code == 'wrong-password') {
+        message = 'Incorrect password.';
+      }
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error: $e')));
     }
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
   }
-}
 
   void verifyPhone(String phone, BuildContext context) {
-  _auth.verifyPhoneNumber(
-    phoneNumber: phone,
-    verificationCompleted: (PhoneAuthCredential credential) async {
-      await _auth.signInWithCredential(credential);
-      _handlePostLogin(context);
-    },
-    verificationFailed: (FirebaseAuthException e) {
-      String message = 'Verification failed. Please try again.';
-      if (e.code == 'invalid-phone-number') {
-        message = 'The phone number entered is invalid.';
-      } else if (e.code == 'quota-exceeded') {
-        message = 'The phone number verification quota has been exceeded. Try again later.';
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
-    },
-    codeSent: (String verificationId, int? resendToken) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) {
-          // Navigate to OTP screen as soon as the OTP is sent
-          GoRouter.of(context).go('/otp-screen', extra: verificationId);
+    _auth.verifyPhoneNumber(
+      phoneNumber: phone,
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        await _auth.signInWithCredential(credential);
+        _handlePostLogin(context);
+      },
+      verificationFailed: (FirebaseAuthException e) {
+        String message = 'Verification failed. Please try again.';
+        if (e.code == 'invalid-phone-number') {
+          message = 'The phone number entered is invalid.';
+        } else if (e.code == 'quota-exceeded') {
+          message =
+              'The phone number verification quota has been exceeded. Try again later.';
         }
-      });
-    },
-    codeAutoRetrievalTimeout: (String verificationId) {
-      log('Timeout: $verificationId');
-    },
-  );
-}
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      },
+      codeSent: (String verificationId, int? resendToken) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (context.mounted) {
+            // Navigate to OTP screen as soon as the OTP is sent
+            GoRouter.of(context).go('/otp-screen', extra: verificationId);
+          }
+        });
+      },
+      codeAutoRetrievalTimeout: (String verificationId) {
+        log('Timeout: $verificationId');
+      },
+    );
+  }
 
-  Future<void> verifyOtp(String otp, String verificationId, BuildContext context) async {
+  Future<void> verifyOtp(
+      String otp, String verificationId, BuildContext context) async {
     try {
       final credential = PhoneAuthProvider.credential(
         verificationId: verificationId,
@@ -117,7 +126,9 @@ Future<void> loginWithEmail(String email, String password, BuildContext context)
       final role = userDoc['role'];
       if (role == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Role not defined in Firestore. Please contact support.')),
+          const SnackBar(
+              content: Text(
+                  'Role not defined in Firestore. Please contact support.')),
         );
         return;
       }

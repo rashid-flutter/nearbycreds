@@ -50,7 +50,8 @@ class _RedeemPageState extends State<RedeemPage> {
 
     if (userCoins < price) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Not enough coins to redeem this product')),
+        const SnackBar(
+            content: Text('Not enough coins to redeem this product')),
       );
       return;
     }
@@ -109,7 +110,9 @@ class _RedeemPageState extends State<RedeemPage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('You redeemed ${shop.product.name} for $price coins!')),
+        SnackBar(
+            content:
+                Text('You redeemed ${shop.product.name} for $price coins!')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

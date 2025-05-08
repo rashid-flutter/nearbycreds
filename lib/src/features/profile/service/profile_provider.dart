@@ -7,12 +7,12 @@ final profileServiceProvider = Provider<ProfileService>((ref) {
   return ProfileService();
 });
 
-
 final profileProvider = FutureProvider<Profile?>((ref) async {
   final profileService = ProfileService();
   final userId = FirebaseAuth.instance.currentUser?.uid;
   if (userId != null) {
-    return  profileService.getProfile();  // Fetch the profile based on the user ID
+    return profileService
+        .getProfile(); // Fetch the profile based on the user ID
   } else {
     throw Exception('User not logged in');
   }

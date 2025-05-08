@@ -31,23 +31,29 @@ class PaymentService {
     _razorpay.clear();
     onPaymentSuccess = null;
   }
-  late final String _currentShopId;  // Declare this in PaymentService
+
+  String? _currentShopId;
 
   void openCheckout({
     required int amount,
     required String name,
     required String description,
-    required String shopId,
+    String? shopId, // Made optional
+    required Function(int)
+        onPaymentSuccess, // Add callback parameter for success
   }) async {
-    
     try {
-      _currentShopId = shopId; 
       _paymentAmount = amount;
 
-      final shop = await _shopService.getShopById(shopId);
-      if (shop == null) {
-        debugPrint('❌ No shop found with the given shopId!');
-        return;
+      // Only set and fetch shop if provided
+      Shop? shop;
+      if (shopId != null) {
+        _currentShopId = shopId;
+        shop = await _shopService.getShopById(shopId);
+        if (shop == null) {
+          debugPrint('❌ No shop found with the given shopId!');
+          return;
+        }
       }
 
       final profile = await _profileService.getProfile();
@@ -57,16 +63,13 @@ class PaymentService {
       }
 
       var options = {
-        'key': 'rzp_test_h3G4D7fHQm3FGZ', // replace with your live key in production
-        'amount': amount * 100, // in paise
+        'key': 'rzp_test_h3G4D7fHQm3FGZ',
+        'amount': amount * 100,
         'name': name,
         'description': description,
         'prefill': {
           'contact': profile.phone,
           'email': profile.email,
-        },
-        'external': {
-          'wallets': [],
         },
         'method': {
           'netbanking': true,
@@ -74,10 +77,29 @@ class PaymentService {
           'upi': true,
           'wallets': true,
         },
-        'theme': {
-          'color': '#3399cc'
-        }
+        'theme': {'color': '#3399cc'}
       };
+
+      // Razorpay payment success callback
+      _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS,
+          (PaymentSuccessResponse response) {
+        debugPrint('✅ Payment successful: ${response.paymentId}');
+        // Trigger the success callback with earned coins (e.g. calculate from amount)
+        final int earnedCoins = amount ~/ 30; // Example logic
+        onPaymentSuccess(earnedCoins); // Call the callback with earned coins
+      });
+
+      _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR,
+          (PaymentFailureResponse response) {
+        debugPrint('❌ Payment failed: ${response.message}');
+        // Handle failure case
+      });
+
+      _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR,
+          (PaymentFailureResponse response) {
+        debugPrint('❌ Payment cancelled');
+        // Handle cancellation case
+      });
 
       _razorpay.open(options);
     } catch (e) {
@@ -86,30 +108,38 @@ class PaymentService {
   }
 
   void _handleSuccess(PaymentSuccessResponse response) async {
-  debugPrint('✅ Payment Successful: ${response.paymentId}');
-  final userId = FirebaseAuth.instance.currentUser?.uid;
-  if (userId == null) return;
+    debugPrint('✅ Payment Successful: ${response.paymentId}');
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
 
-  _currentPaymentId = response.paymentId;
-  final coinsEarned = _paymentAmount ~/ 90;
+    _currentPaymentId = response.paymentId;
+    final coinsEarned = _paymentAmount ~/ 90;
 
-  // Retrieve the correct shopId (stored earlier)
-  final shop = await _shopService.getShopById(_currentShopId);
-  if (shop == null) {
-    debugPrint('❌ Shop not found for the payment!');
-    return;
+    Shop? shop;
+    if (_currentShopId != null) {
+      shop = await _shopService.getShopById(_currentShopId!);
+      if (shop == null) {
+        debugPrint('❌ Shop not found for the payment!');
+        return;
+      }
+    }
+
+    // Store payment details with or without shop
+    await _storePaymentDetails(
+      response.paymentId!,
+      userId,
+      'success',
+      coinsEarned,
+      shop,
+    );
+
+    // Update the user's coin balance
+    await _earnCoins(userId, _paymentAmount);
+
+    if (onPaymentSuccess != null) {
+      onPaymentSuccess!(coinsEarned);
+    }
   }
-
-  // Store payment details with the shop info
-  await _storePaymentDetails(response.paymentId!, userId, 'success', coinsEarned, shop);
-
-  // Update the user's coin balance
-  await _earnCoins(userId, _paymentAmount);
-
-  if (onPaymentSuccess != null) {
-    onPaymentSuccess!(coinsEarned);
-  }
-}
 
   void _handleFailure(PaymentFailureResponse response) async {
     debugPrint('❌ Payment Failed: ${response.message}');
@@ -151,7 +181,7 @@ class PaymentService {
 
   Future<void> _earnCoins(String userId, int amount) async {
     try {
-      final coinsEarned = amount ~/ 90;
+      final coinsEarned = amount ~/ 30;
 
       final profileDoc = await _firestore.collection('users').doc(userId).get();
       if (!profileDoc.exists) {

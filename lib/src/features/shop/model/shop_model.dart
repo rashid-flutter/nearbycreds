@@ -1,11 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
 class Shop {
   final String id;
   final String name;
   final bool active;
-  final bool redeem; 
+  final bool redeem;
   final String ownerId;
   final DateTime createdAt;
   final Product product;
@@ -14,7 +13,7 @@ class Shop {
     required this.id,
     required this.name,
     required this.active,
-    required this.redeem, 
+    required this.redeem,
     required this.ownerId,
     required this.createdAt,
     required this.product,

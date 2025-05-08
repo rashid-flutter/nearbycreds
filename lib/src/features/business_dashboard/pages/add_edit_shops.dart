@@ -11,14 +11,14 @@ class AddEditShopScreen extends StatefulWidget {
   final String? shopId;
   final String? name;
   final bool active;
-  final VoidCallback? onSubmitSuccess;  // Add callback to notify parent
+  final VoidCallback? onSubmitSuccess; // Add callback to notify parent
 
   const AddEditShopScreen({
     super.key,
     this.shopId,
     this.name,
     this.active = true,
-    this.onSubmitSuccess,  // Pass callback to parent
+    this.onSubmitSuccess, // Pass callback to parent
   });
 
   @override
@@ -132,7 +132,8 @@ class _AddEditShopScreenState extends State<AddEditShopScreen> {
 
     // Call the parent callback to notify the submission was successful
     if (widget.onSubmitSuccess != null) {
-      widget.onSubmitSuccess!(); // Notify parent to switch back to the dashboard
+      widget
+          .onSubmitSuccess!(); // Notify parent to switch back to the dashboard
     }
 
     setState(() => _isLoading = false);
@@ -198,7 +199,6 @@ class _AddEditShopScreenState extends State<AddEditShopScreen> {
               prefixIcon: Icons.store,
               autoFocus: true,
             ),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -221,7 +221,6 @@ class _AddEditShopScreenState extends State<AddEditShopScreen> {
               prefixIcon: Icons.label,
             ),
             const SizedBox(height: 10),
-
             AppTextField(
               controller: _productDescController,
               label: 'Product Description',
@@ -229,14 +228,12 @@ class _AddEditShopScreenState extends State<AddEditShopScreen> {
               prefixIcon: Icons.description,
             ),
             const SizedBox(height: 10),
-
             AppTextField(
               controller: _priceController,
               label: 'Product Price',
               keyboardType: TextInputType.number,
               prefixIcon: Icons.attach_money,
             ),
-
             const SizedBox(height: 20),
             AppButton(
               label: isEdit ? 'Update Shop & Product' : 'Create Shop & Product',

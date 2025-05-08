@@ -5,16 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nearbycreds/firebase_options.dart';
 import 'package:nearbycreds/src/core/app_router.dart';
 
-
-void main() async{
+void main() async {
   // runApp(const MainApp());
-    WidgetsFlutterBinding.ensureInitialized();
-   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-   
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Initialize Firebase App Check with a debug provider for development
   // await FirebaseAppCheck.instance.activate();
-  
+
   runApp(const ProviderScope(child: MainApp()));
 }
 
@@ -23,7 +21,7 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-   return MaterialApp.router(
+    return MaterialApp.router(
       routerConfig: AppRouter.router,
       debugShowCheckedModeBanner: false,
       title: 'NearbyCreds',
