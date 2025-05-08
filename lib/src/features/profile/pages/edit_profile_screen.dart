@@ -61,7 +61,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Future<String?> _uploadProfileImage(File image) async {
     try {
       String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-      Reference storageRef = FirebaseStorage.instance.ref().child('profile_images/$fileName');
+      Reference storageRef =
+          FirebaseStorage.instance.ref().child('profile_images/$fileName');
       await storageRef.putFile(image);
       return await storageRef.getDownloadURL();
     } catch (e) {
@@ -146,7 +147,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               keyboardType: TextInputType.phone,
               prefixIcon: Icons.phone,
               readOnly: true,
-
             ),
             const SizedBox(height: 8),
 

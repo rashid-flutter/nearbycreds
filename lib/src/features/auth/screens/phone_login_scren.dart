@@ -81,7 +81,6 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen> {
       if (!mounted) return;
 
       checkUserRole(); // After verifying OTP, check the user role
-
     } catch (e) {
       setState(() => isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -90,48 +89,49 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen> {
     }
   }
 
- void checkUserRole() async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user == null) return;
+  void checkUserRole() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-  try {
-    final userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .get();
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
 
-    if (!userDoc.exists) {
-      if (context.mounted) {
-        context.go('/select-role');
-      }
-    } else {
-      final role = userDoc.data()?['role'];
-      log('User role: $role');  // Debug log to see the retrieved role
-      if (role != null) {
-        if (context.mounted) {
-          if (role == 'customer') {
-            context.go('/home');
-          } else if (role == 'business') {
-            context.go('/business-dashboard');
-          }
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Role not defined, please select a role')),
-        );
+      if (!userDoc.exists) {
         if (context.mounted) {
           context.go('/select-role');
         }
+      } else {
+        final role = userDoc.data()?['role'];
+        log('User role: $role'); // Debug log to see the retrieved role
+        if (role != null) {
+          if (context.mounted) {
+            if (role == 'customer') {
+              context.go('/home');
+            } else if (role == 'business') {
+              context.go('/business-dashboard');
+            }
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Role not defined, please select a role')),
+          );
+          if (context.mounted) {
+            context.go('/select-role');
+          }
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error checking user role: $e')),
+        );
       }
     }
-  } catch (e) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error checking user role: $e')),
-      );
-    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -166,7 +166,8 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen> {
                 defaultPinTheme: PinTheme(
                   width: 56,
                   height: 56,
-                  textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                  textStyle: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.w600),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey),
                     borderRadius: BorderRadius.circular(10),

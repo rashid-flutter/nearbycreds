@@ -4,7 +4,7 @@ import 'package:nearbycreds/src/features/home/widgets/coin_card.dart';
 import 'package:nearbycreds/src/features/home/widgets/shop_cards.dart';
 import 'package:nearbycreds/src/features/profile/service/profile_provider.dart';
 import 'package:nearbycreds/src/features/shop/service/shop_provider.dart';
-import 'package:nearbycreds/src/features/profile/service/profile_service.dart';  // Profile service to fetch user data
+import 'package:nearbycreds/src/features/profile/service/profile_service.dart'; // Profile service to fetch user data
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -15,11 +15,13 @@ class HomeScreen extends ConsumerWidget {
     final shopAsync = ref.watch(allShopsProvider);
 
     // Fetch the user profile to get coins balance
-    final userProfileAsync = ref.watch(profileProvider);  // Assume profileProvider is defined elsewhere to get profile data
+    final userProfileAsync = ref.watch(
+        profileProvider); // Assume profileProvider is defined elsewhere to get profile data
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('All Shops', style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
+        title: const Text('All Shops',
+            style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
         actions: [
           userProfileAsync.when(
             loading: () => const Padding(
@@ -32,7 +34,8 @@ class HomeScreen extends ConsumerWidget {
             ),
             data: (profile) {
               if (profile == null) {
-                return const SizedBox.shrink(); // Or show an error/fallback widget
+                return const SizedBox
+                    .shrink(); // Or show an error/fallback widget
               } else {
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -91,7 +94,8 @@ class HomeScreen extends ConsumerWidget {
           data: (shops) {
             return userProfileAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text('Error loading profile')),
+              error: (err, stack) =>
+                  Center(child: Text('Error loading profile')),
               data: (profile) {
                 return ListView(
                   children: [
@@ -101,7 +105,8 @@ class HomeScreen extends ConsumerWidget {
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
                         "Shops",
-                        style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 25, fontWeight: FontWeight.bold),
                       ),
                     ),
                     const SizedBox(height: 8),

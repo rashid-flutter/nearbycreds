@@ -34,22 +34,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-        
+
             if (snapshot.hasError) {
               return Center(child: Text('Error: ${snapshot.error}'));
             }
-        
+
             if (!snapshot.hasData || snapshot.data == null) {
               return const Center(child: Text('No user data found.'));
             }
-        
+
             final profile = snapshot.data!;
             final name = profile.name ?? 'No Name';
             final phone = profile.phone ?? 'No Phone';
             final email = profile.email ?? 'No Email';
             final role = profile.role ?? 'No Role';
             final profileImageUrl = profile.profileImageUrl;
-        
+
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -63,14 +63,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       backgroundImage: profileImageUrl != null
                           ? NetworkImage(profileImageUrl)
                           : const AssetImage(
-                              'assets/images/blank-profile-picture-973460_1280.webp') // Default image
+                                  'assets/images/blank-profile-picture-973460_1280.webp') // Default image
                               as ImageProvider,
                     ),
                     const SizedBox(height: 16),
                     // Name
                     Text(
                       'Name: $name',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     // Phone Number
@@ -91,7 +92,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       style: const TextStyle(fontSize: 16),
                     ),
                     const SizedBox(height: 20),
-        
+
                     // Edit Button and Logout Button inside Row
                     Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -103,7 +104,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             child: AppButton(
                               label: 'Edit Profile',
                               icon: Icons.edit,
-                              isLoading: false, // No loading state for this button
+                              isLoading:
+                                  false, // No loading state for this button
                               onPressed: () {
                                 // Navigate to EditProfileScreen
                                 GoRouter.of(context).push(
@@ -126,11 +128,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             child: AppButton(
                               label: 'Logout',
                               icon: Icons.exit_to_app,
-                              isLoading: false, // No loading state for this button
+                              isLoading:
+                                  false, // No loading state for this button
                               onPressed: () {
                                 ref.read(authProvider).logout(context);
                               },
-                              color: Colors.red, // Custom color for the logout button
+                              color: Colors
+                                  .red, // Custom color for the logout button
                             ),
                           ),
                         ],

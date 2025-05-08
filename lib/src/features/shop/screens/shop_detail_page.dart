@@ -17,36 +17,35 @@ class ShopDetailPage extends StatefulWidget {
 class _ShopDetailPageState extends State<ShopDetailPage> {
   late final PaymentService paymentService;
 
-@override
-void initState() {
-  super.initState();
+  @override
+  void initState() {
+    super.initState();
 
-  paymentService = PaymentService(); // ✅ Singleton instance
+    paymentService = PaymentService(); // ✅ Singleton instance
 
-  // ✅ Set callback using the singleton instance
-  paymentService.onPaymentSuccess = (int coinsEarned) {
-    log("Coins earned: $coinsEarned");
+    // ✅ Set callback using the singleton instance
+  }
 
-    if (mounted) {
-      context.push('/payment-success', extra: coinsEarned); // ✅ Navigation
-    }
-  };
-}
-
-@override
-void dispose() {
-  paymentService.onPaymentSuccess = null; // ✅ Clean up
-  super.dispose();
-}
-
-  
+  @override
+  void dispose() {
+    paymentService.onPaymentSuccess = null; // ✅ Clean up
+    super.dispose();
+  }
 
   void _handlePayment() {
-    PaymentService().openCheckout(
+    paymentService.openCheckout(
       amount: widget.shop.product.price.toInt(),
       name: widget.shop.product.name,
       description: widget.shop.product.description ?? 'Product Description',
       shopId: widget.shop.id,
+      onPaymentSuccess: (int coinsEarned) {
+        // This will be executed when payment is successful
+        log("Coins earned: $coinsEarned");
+        if (mounted) {
+          context.push('/payment-success',
+              extra: coinsEarned); // Navigate to success page
+        }
+      },
     );
   }
 
@@ -75,7 +74,8 @@ void dispose() {
               const SizedBox(height: 8),
               Text(
                 shop.name,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(

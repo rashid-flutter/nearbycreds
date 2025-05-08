@@ -26,71 +26,69 @@ class _CartPageState extends State<CartPage> {
     _loadPurchasedShops();
   }
 
-Future<void> _loadPurchasedShops() async {
-  try {
-    final user = _auth.currentUser;
-    if (user == null) {
-      debugPrint('No user is logged in');
+  Future<void> _loadPurchasedShops() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        debugPrint('No user is logged in');
+        setState(() {
+          _loading = false;
+        });
+        return;
+      }
+
+      // ✅ Only fetch successful payments by the current user and sort by timestamp
+      final paymentsSnapshot = await _firestore
+          .collection('payments')
+          .where('status', isEqualTo: 'success')
+          .where('userId', isEqualTo: user.uid)
+          // ❌ Temporarily remove orderBy('timestamp') to avoid index error
+          .get();
+
+      debugPrint('Payments Snapshot: ${paymentsSnapshot.docs.length}');
+
+      if (paymentsSnapshot.docs.isEmpty) {
+        log('No successful payments found for the user');
+      }
+
+      final shopIds = paymentsSnapshot.docs
+          .map((doc) {
+            // Check if 'shopId' exists in the document
+            if (doc.data().containsKey('shopId')) {
+              return doc['shopId'] as String?;
+            } else {
+              log('No shopId field found in payment document: ${doc.id}');
+              return null;
+            }
+          })
+          .where((id) => id != null)
+          .toSet();
+
+      log('Shop IDs from payments: $shopIds');
+
+      List<Shop> shops = [];
+      for (final shopId in shopIds) {
+        final shopDoc = await _firestore.collection('shops').doc(shopId).get();
+        if (shopDoc.exists) {
+          debugPrint('Found shop: $shopId');
+          final shop = Shop.fromFirestore(shopDoc);
+          shops.add(shop);
+        } else {
+          debugPrint('Shop not found for shopId: $shopId');
+        }
+      }
+
+      setState(() {
+        _purchasedShops = shops;
+        _loading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading purchased shops: $e');
       setState(() {
         _loading = false;
       });
-      return;
     }
-
-    // ✅ Only fetch successful payments by the current user and sort by timestamp
-   final paymentsSnapshot = await _firestore
-    .collection('payments')
-    .where('status', isEqualTo: 'success')
-    .where('userId', isEqualTo: user.uid)
-    // ❌ Temporarily remove orderBy('timestamp') to avoid index error
-    .get();
-
-
-
-    debugPrint('Payments Snapshot: ${paymentsSnapshot.docs.length}');
-
-    if (paymentsSnapshot.docs.isEmpty) {
-      log('No successful payments found for the user');
-    }
-
-    final shopIds = paymentsSnapshot.docs
-        .map((doc) {
-          // Check if 'shopId' exists in the document
-          if (doc.data().containsKey('shopId')) {
-            return doc['shopId'] as String?;
-          } else {
-            log('No shopId field found in payment document: ${doc.id}');
-            return null;
-          }
-        })
-        .where((id) => id != null)
-        .toSet();
-
-    log('Shop IDs from payments: $shopIds');
-
-    List<Shop> shops = [];
-    for (final shopId in shopIds) {
-      final shopDoc = await _firestore.collection('shops').doc(shopId).get();
-      if (shopDoc.exists) {
-        debugPrint('Found shop: $shopId');
-        final shop = Shop.fromFirestore(shopDoc);
-        shops.add(shop);
-      } else {
-        debugPrint('Shop not found for shopId: $shopId');
-      }
-    }
-
-    setState(() {
-      _purchasedShops = shops;
-      _loading = false;
-    });
-  } catch (e) {
-    debugPrint('Error loading purchased shops: $e');
-    setState(() {
-      _loading = false;
-    });
   }
-}
 
   @override
   Widget build(BuildContext context) {
